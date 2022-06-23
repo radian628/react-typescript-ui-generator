@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import React, { useState } from 'react'
 import logo from './logo.svg'
 import './App.css'
 import { AsNormalTypescriptObject, InterfaceMode, InterfaceUI, InterfaceUIData, InterfaceUIDataified } from './InterfaceUI'
@@ -27,6 +27,13 @@ type Test2 = {
   union: ({ x: number, y: number, z?: number } | { desc: string })[]
   primitiveUnion: number | string
 }
+
+type BinaryTree = number | {
+  left: BinaryTree,
+  right: BinaryTree
+};
+
+type BinaryTreeUI = InterfaceUIDataified<BinaryTree>;
 
 type Test = InterfaceUIDataified<Test2>;
 
@@ -119,16 +126,32 @@ function App() {
     primitiveUnion: 0
   }
 
+  let binTreeRoot: BinaryTreeUI | {} = {}
+
+  Object.assign(binTreeRoot, {
+    $mode: InterfaceMode.UNION,
+    unionExamples: [0, { left: binTreeRoot, right: binTreeRoot }],
+    labels: ["leaf", "interior"],
+    data: 0,
+    index: 0
+  });
+
+  let [treeUIData, setTreeUIData] 
+    = useState<BinaryTreeUI>(binTreeRoot as BinaryTreeUI);
+
 
   let t2: Test2 = t;
   //console.log(t2);
   //console.log(toNormalTypescriptObject(test));
 
-  return (
+  return (<React.Fragment>
     <InterfaceUI data={test} setData={data => {
       setTest(data);
     }}></InterfaceUI>
-  )
+    <InterfaceUI data={treeUIData} setData={data => {
+      setTreeUIData(data);
+    }}></InterfaceUI>
+  </React.Fragment>);
 }
 
 export default App
