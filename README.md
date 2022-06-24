@@ -1,6 +1,6 @@
 # react-typescript-ui-generator
 
-(GUIDE)[#guide]
+[GUIDE](#guide)
 
 ## tl;dr
  Auto-generate React UIs for (almost) arbitrary JSON data structures, all using a completely type-safe API.
