@@ -8,6 +8,7 @@
 
 ## Features
 ### Current Features
+Currently supports the following data types:
  - Numbers
  - Strings
  - Booleans
@@ -15,10 +16,16 @@
  - Objects of any type in this list
  - Unions of any type in this list
  - Circular/recursive types
+ - Any other kind of data with custom elements
+
+The following forms of input are supported:
+ - Text inputs for numbers/strings
+ - Checkboxes for booleans
+ - Dropdowns for selecting union variants
+ - Sliders/range inputs for numbers
+ - Arbitrary elements
 
 ### Planned Features
- - Insertion of arbitrary UI elements for specialized kinds of data
  - Array deletion and reordering
- - Custom labels
  - Better CSS compatibility
  - Automatic conversion of `InterfaceUIDataified` data to original data

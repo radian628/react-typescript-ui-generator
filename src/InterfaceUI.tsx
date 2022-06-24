@@ -56,7 +56,7 @@ type NumberInputProps = {
 export function NumberInput(props: NumberInputProps) {
     return (<React.Fragment>
         {props.label ? <label>{props.label}</label> : undefined}
-        <input type="number" value={props.num} onChange={e => {
+        <input className="number-input" type="number" value={props.num} onChange={e => {
             props.setNum(Number(e.currentTarget.value));
         }}></input>
     </React.Fragment>)
@@ -77,7 +77,7 @@ type StringInputProps = {
 export function StringInput(props: StringInputProps) {
     return (<React.Fragment>
         {props.label ? <label>{props.label}</label> : undefined}
-        <input value={props.str} onChange={e => {
+        <input className="string-input" value={props.str} onChange={e => {
             props.setStr(e.currentTarget.value);
         }}></input>
     </React.Fragment>)
@@ -96,7 +96,7 @@ type BoolInputProps = {
 export function BoolInput(props: BoolInputProps) {
     return (<React.Fragment>
         {props.label ? <label>{props.label}</label> : undefined}
-        <input type="checkbox" checked={props.bool} onChange={e => {
+        <input className="bool-input" type="checkbox" checked={props.bool} onChange={e => {
             props.setBool(e.currentTarget.checked);
         }}></input>
     </React.Fragment>)
@@ -137,8 +137,8 @@ type IsUnion<T, U extends T = T> =
 export type DistributeInterfaceUI<T> =
     T extends Object ? InterfaceUIDataified<T> : never
 
-export type InterfaceUIDataified<T> =
-    Eq<boolean, T, 1, 2> extends 1
+export type InterfaceUIDataifiedWithoutOptions<T> =
+    (Eq<boolean, T, 1, 2> extends 1
     ? T
     : Eq<Exclude<T, undefined>, T, 1, 2> extends 2
     ? {
@@ -157,21 +157,27 @@ export type InterfaceUIDataified<T> =
     : T extends Array<any>
     ? GetArrayInterfaceUIData<T>
     : IsUnion<T> extends false
-    ? Required<{
+    ? (Required<{
         [Key in keyof T]: InterfaceUIDataified<T[Key]>
-    }> & { exists?: undefined }
-    : Eq<string, T, 1, 2> extends 1
-    ? T
-    : Eq<number, T, 1, 2> extends 1
-    ? T
-    : Eq<undefined, T, 1, 2> extends 1
-    ? T
-    : never;
+    }>)
+    // : Eq<string, T, 1, 2> extends 1
+    // ? T | TypedInterfaceUIWithOptions<T>
+    // : Eq<number, T, 1, 2> extends 1
+    // ? T | TypedInterfaceUIWithOptions<T>
+    // : Eq<undefined, T, 1, 2> extends 1
+    // ? T | TypedInterfaceUIWithOptions<T>
+    : never);
+
+export type InterfaceUIDataified<T> = 
+    InterfaceUIDataifiedWithoutOptions<T>
+    | TypedInterfaceUIWithOptions<InterfaceUIDataifiedWithoutOptions<T>>
 
 export type AsNormalTypescriptObject<T extends InterfaceUIData> =
     T extends boolean
     ? T
     : T extends InterfaceUIUnion
+    ? AsNormalTypescriptObject<T["data"]>
+    : T extends InterfaceUIWithOptions
     ? AsNormalTypescriptObject<T["data"]>
     : T extends InterfaceUIOptional
     ? AsNormalTypescriptObject<T["data"]> | undefined
@@ -181,45 +187,53 @@ export type AsNormalTypescriptObject<T extends InterfaceUIData> =
     ? {
         [Key in keyof T]: AsNormalTypescriptObject<T[Key]>
     }
-    : T extends string
+    : string extends T
     ? T
-    : T extends number
+    : number extends T
     ? T
-    : T extends undefined
+    : undefined extends T
     ? T
     : never;
 
-// export function toNormalTypescriptObject<T extends InterfaceUIData>(uiData: T): AsNormalTypescriptObject<T> {
-//     //@ts-ignore
-//     if (Array.isArray(uiData)) return uiData;
+type assddsf = AsNormalTypescriptObject<number | TypedInterfaceUIWithOptions<number>>
+
+export function toNormalTypescriptObject<T>(uiData: InterfaceUIDataified<T> & InterfaceUIData): T {
     
-//     switch (typeof uiData) {
-//         case "object":
-//             if (typeof uiData.exists == "boolean") {
-//                 //@ts-ignore
-//                 return (uiData.exists) ? toNormalTypescriptObject(uiData.data) : undefined;
-//             } else {
-//                 //@ts-ignore
-//                 return Object.fromEntries(
-//                     //@ts-ignore
-//                     Object.entries(uiData).map((entry) => {
-//                         //@ts-ignore
-//                         const [k, v] = entry;
-//                         return [k, toNormalTypescriptObject(v)]
-//                     })
-//                 );
-//             }
-//         case "number":
-//         case "string":
-//         case "boolean":
-//         case "undefined":
-//             //@ts-ignore
-//             return uiData;
-//     }
-// }
+    switch (typeof uiData) {
+    case "object":
+        switch (uiData.$mode) {
+        case undefined:
+            //@ts-ignore
+            return Object.fromEntries(
+                Object.entries(uiData).map((entry) => {
+                    const [k, v] = entry;
+                    //@ts-ignore
+                    return [k, toNormalTypescriptObject(v)];
+                })
+            )
+        case InterfaceMode.OPTIONAL:
+            //@ts-ignore
+            return toNormalTypescriptObject(uiData.exists ? uiData.data : undefined);
+        case InterfaceMode.ARRAY:
+            //@ts-ignore
+            return uiData.array.map(elem =>
+                //@ts-ignore
+                toNormalTypescriptObject(elem));
+        case InterfaceMode.UNION:
+            //@ts-ignore
+            return toNormalTypescriptObject(uiData.data);
+        }
+    case "number":
+    case "string":
+    case "boolean":
+    case "undefined":
+        //@ts-ignore
+        return uiData;
+    }
+}
 
 export enum InterfaceMode {
-    OPTIONAL, ARRAY, UNION
+    OPTIONAL, ARRAY, UNION, WITH_OPTIONS
 };
 
 type InterfaceUIObject = {
@@ -227,25 +241,48 @@ type InterfaceUIObject = {
     [key: InterfaceUIDataKey]: InterfaceUIData
 }
 
-type InterfaceUIOptional = {
+export type InterfaceUIOptional = {
     $mode: InterfaceMode.OPTIONAL
     exists: boolean,
     data: InterfaceUIData
 }
 
-type InterfaceUIArray = {
-    $mode: InterfaceMode.ARRAY
-    arrayExample: InterfaceUIData,
-    array: InterfaceUIData[]
-}
 
-type InterfaceUIUnion = {
+export type TypedInterfaceUIArray<T extends InterfaceUIData> = {
+    $mode: InterfaceMode.ARRAY
+    arrayExample: T & InterfaceUIData,
+    array: (T & InterfaceUIData)[]
+}
+export type InterfaceUIArray = TypedInterfaceUIArray<any>;
+
+export type TypedInterfaceUIUnion<T extends InterfaceUIData> = {
     $mode: InterfaceMode.UNION,
-    unionExamples: InterfaceUIData[],
-    data: InterfaceUIData,
+    unionExamples: (T & InterfaceUIData)[],
+    data: T & InterfaceUIData,
     labels: string[],
     index: number
 };
+export type InterfaceUIUnion = TypedInterfaceUIUnion<any>
+
+export type InterfaceUIOptions = {
+    $mode: InterfaceMode.WITH_OPTIONS,
+    className?: string,
+    label?: string
+}
+
+export type InterfaceUIWithOptions = TypedInterfaceUIWithOptions<any>;
+
+
+type TypedInterfaceUIWithOptions<T> = {
+    data: T,
+    customElement?: (props: 
+        { 
+            label?: string,
+            data: T,
+            setData: (data: T) => void
+        }
+    ) => JSX.Element,
+} & InterfaceUIOptions
 
 export type InterfaceUIData = 
       InterfaceUIObject
@@ -255,19 +292,63 @@ export type InterfaceUIData =
     | undefined 
     | InterfaceUIOptional
     | InterfaceUIArray
-    | InterfaceUIUnion;
+    | InterfaceUIUnion
+    | InterfaceUIWithOptions;
 
 type InterfaceUIProps<T> = {
     data: InterfaceUIData & T,
     label?: string,
+    className?: string,
     setData: (data: InterfaceUIData & T) => void
 }
 
 export function InterfaceUI<T>(props: InterfaceUIProps<T>) {
+    let className: string | undefined = props.className ?? "";
+    if (typeof props.data == "object") {
+        switch (props.data.$mode) {
+        case undefined:
+            className += " interface-ui-object";
+            break;
+        case InterfaceMode.UNION:
+            className += " interface-ui-union";
+            break;
+        case InterfaceMode.ARRAY:
+            className += " interface-ui-array";
+            break;
+        case InterfaceMode.OPTIONAL:
+            className += " interface-ui-optional";
+            break;
+        }
+    }
+
+    if (className === "") className = undefined;
+
     switch (typeof props.data) {
     case "object":
-        if (props.data.$mode == InterfaceMode.UNION) {
-            return (<div className="interface-ui-union">
+        if (props.data.$mode == InterfaceMode.WITH_OPTIONS) {
+            if (props.data.customElement) {
+                return <props.data.customElement label={props.label} data={props.data.data} setData={data => {
+                    if (typeof props.data != "object" || props.data.$mode != InterfaceMode.WITH_OPTIONS) return;
+                    props.setData({
+                        ...props.data,
+                        data,
+                    });
+                }}></props.data.customElement>
+            }
+            return (<InterfaceUI 
+                data={props.data.data}
+                setData={(data) => {
+                    if (typeof props.data != "object" || props.data.$mode != InterfaceMode.WITH_OPTIONS) return;
+                    props.setData({
+                        ...props.data,
+                        data,
+                    });
+                }}
+                label={props.data.label}
+                className={props.data.className}
+            ></InterfaceUI>)
+        } else if (props.data.$mode == InterfaceMode.UNION) {
+            return (<div className={className}>
                 {props.label ? <label>{props.label}</label> : undefined}
                 <SelectInput data={props.data.index} valueNames={props.data.labels} values={props.data.unionExamples} caption={""} setData={(data, index) => {
                     if (typeof props.data != "object" || props.data.$mode != InterfaceMode.UNION) return;
@@ -295,12 +376,13 @@ export function InterfaceUI<T>(props: InterfaceUIProps<T>) {
                     array: props.data.array.concat(props.data.arrayExample)
                 })
             }
-            return (<div className="interface-ui-array">
+            return (<div className={className}>
                 {props.label ? <label>{props.label}</label> : undefined}
+                <ul>
                 {props.data.array
                 .map((datum, key) => {
                     if (typeof props.data != "object" || props.data.$mode != InterfaceMode.ARRAY) return;
-                    return <InterfaceUI 
+                    return <li><InterfaceUI 
                         key={key.toString()} 
                         label={key.toString()} 
                         data={reinterpret<any, InterfaceUIData>(props.data.array[key])} 
@@ -310,14 +392,15 @@ export function InterfaceUI<T>(props: InterfaceUIProps<T>) {
                                 array: props.data.array.map((d, i) => (i == key) ? datum : d)
                             }
                         ); }}
-                    ></InterfaceUI>
+                    ></InterfaceUI></li>
                  })}
+                 </ul>
                  {<button onClick={addNewElement}>Add New</button>}
             </div>);
         } else if (props.data.$mode == InterfaceMode.OPTIONAL) {
-            return (<div className="interface-ui-optional">
+            return (<div className={className}>
                 {props.label ? <label>{props.label}</label> : undefined}
-                <BoolInput label="Enabled" bool={props.data.exists} setBool={bool => {
+                <BoolInput bool={props.data.exists} setBool={bool => {
                     if (typeof props.data != "object" || props.data.$mode != InterfaceMode.OPTIONAL) return;
                     props.setData({
                         $mode: InterfaceMode.OPTIONAL,
@@ -337,7 +420,7 @@ export function InterfaceUI<T>(props: InterfaceUIProps<T>) {
                 : undefined}
             </div>)
         } else {
-            return (<div className="interface-ui-object">
+            return (<div className={className}>
                 {props.label ? <label>{props.label}</label> : undefined}
                 {(Object.keys(props.data))
                 .map(key => 

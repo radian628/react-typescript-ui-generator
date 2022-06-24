@@ -11,3 +11,49 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+.input-css-test 
+  .interface-ui-object,
+.input-css-test 
+  .interface-ui-array,
+.input-css-test 
+  .interface-ui-union {
+  border: 1px solid #00000088;
+  border-radius: 5px;
+  background: #00000022;
+  margin: 10px;
+}
+
+.input-css-test ul {
+  list-style: none;
+}
+
+.input-css-test button {
+  border-radius: 5px;
+  font-size: 12px;
+}
+
+.input-css-test label {
+  margin-right: 5px;
+  margin-left: 20px;
+  padding-left: 5px;
+  padding-bottom: 0;
+}
+
+.input-css-test
+  .number-input {
+    border: 1px solid #880000;
+    border-radius: 5px;
+  }
+
+.input-css-test
+  .string-input {
+    border: 1px solid #008800;
+    border-radius: 5px;
+  }
+
+.input-css-test
+  select {
+    border: 1px solid #00000088;
+    border-radius: 5px;
+  }
