@@ -1,5 +1,4 @@
 import React from "react";
-import { Dispatch, SetStateAction } from "react";
 
 
 
@@ -27,16 +26,6 @@ type SelectInputProps<ValueType> = {
     isEqual?: (a: ValueType, b: ValueType) => boolean
 }
 
-function indexOf<T>(arr: T[], elemToFind: T, isEqual?: (a: T, b: T) => boolean) {
-    if (!isEqual) return arr.indexOf(elemToFind);
-    let index = 0;
-    for (let item of arr) {
-        if (isEqual(item, elemToFind)) return index;
-        index++;
-    }
-    return -1;
-}
-
 export function SelectInput<ValueType>(props: SelectInputProps<ValueType>) {
     return (
         <React.Fragment>
@@ -47,7 +36,7 @@ export function SelectInput<ValueType>(props: SelectInputProps<ValueType>) {
                     props.setData(props.values[index], index);
                 }
             }>{
-                props.values.map((possibleValue, i) => (
+                props.values.map((_, i) => (
                     <option key={props.valueNames[i]} value={i}>{props.valueNames[i]}</option>
                 ))
             }</select>
@@ -124,7 +113,7 @@ function reinterpret<Old, New>(old: Old): New {
     return (old as unknown) as New;
 }
 
-type InterfaceUIDataKey = Not<string | symbol | number, "exists", string | symbol | number>;
+type UIGenDataKey = Not<string | symbol | number, "exists", string | symbol | number>;
 
 type NotA<T, Reserved, Alt> = T extends Reserved ? never : Alt
 type NotB<T, Reserved, Alt> = Reserved extends T ? never : Alt
@@ -135,10 +124,10 @@ export type Eq<T, U, Y=unknown, N=never> =
 (<G>() => G extends T ? 1 : 2) extends
 (<G>() => G extends U ? 1 : 2) ? Y : N;
 
-export type GetArrayInterfaceUIData<ArrayType extends Array<any>> = {
+export type GetArrayUIGenData<ArrayType extends Array<any>> = {
     $mode: InterfaceMode.ARRAY,
-    array: InterfaceUIDataified<ArrayType[number]>[],
-    arrayExample: InterfaceUIDataified<ArrayType[number]>
+    array: UIGenDataified<ArrayType[number]>[],
+    arrayExample: UIGenDataified<ArrayType[number]>
 }
 
 //https://stackoverflow.com/questions/53953814/typescript-check-if-a-type-is-a-union
@@ -147,56 +136,59 @@ type IsUnion<T, U extends T = T> =
     (U extends T ? false : true)
         : never) extends false ? false : true
 
-export type DistributeInterfaceUI<T> =
-    T extends Object ? InterfaceUIDataified<T> : never
+export type DistributeUIGen<T> =
+    T extends Object ? UIGenDataified<T> : never
 
-export type InterfaceUIDataifiedWithoutOptions<T> =
+export type UIGenDataifiedWithoutOptions<T> =
     (Eq<boolean, T, 1, 2> extends 1
-    ? T
+    ? boolean
     : Eq<Exclude<T, undefined>, T, 1, 2> extends 2
     ? {
         $mode: InterfaceMode.OPTIONAL,
         exists: boolean,
-        data: InterfaceUIDataified<Exclude<T, undefined>>
+        data: UIGenDataified<Exclude<T, undefined>>
     } 
     : IsUnion<T> extends true
     ? {
         $mode: InterfaceMode.UNION,
-        unionExamples: DistributeInterfaceUI<T>[],
-        data: DistributeInterfaceUI<T>,
+        unionExamples: DistributeUIGen<T>[],
+        data: DistributeUIGen<T>,
         labels: string[],
         index: number
     }
     : T extends Array<any>
-    ? GetArrayInterfaceUIData<T>
+    ? GetArrayUIGenData<T>
     : IsUnion<T> extends false
     ? (Required<{
-        [Key in keyof T]: InterfaceUIDataified<T[Key]>
+        [Key in keyof T]: UIGenDataified<T[Key]>
     }>)
     // : Eq<string, T, 1, 2> extends 1
-    // ? T | TypedInterfaceUIWithOptions<T>
+    // ? T | TypedUIGenWithOptions<T>
     // : Eq<number, T, 1, 2> extends 1
-    // ? T | TypedInterfaceUIWithOptions<T>
+    // ? T | TypedUIGenWithOptions<T>
     // : Eq<undefined, T, 1, 2> extends 1
-    // ? T | TypedInterfaceUIWithOptions<T>
-    : never);
+    // ? T | TypedUIGenWithOptions<T>
+    : TypedUIGenCustomElement<T>);
 
-export type InterfaceUIDataified<T> = 
-    InterfaceUIDataifiedWithoutOptions<T>
-    | TypedInterfaceUIWithOptions<InterfaceUIDataifiedWithoutOptions<T>>
+export type UIGenDataified<T> = 
+    UIGenDataifiedWithoutOptions<T>
+    | TypedUIGenWithOptions<UIGenDataifiedWithoutOptions<T>>
+    | TypedUIGenCustomElement<T>;
 
-export type AsNormalTypescriptObject<T extends InterfaceUIData> =
+export type AsNormalTypescriptObject<T extends UIGenData> =
     T extends boolean
     ? T
-    : T extends InterfaceUIUnion
+    : T extends UIGenUnion
     ? AsNormalTypescriptObject<T["data"]>
-    : T extends InterfaceUIWithOptions
+    : T extends UIGenWithOptions
     ? AsNormalTypescriptObject<T["data"]>
-    : T extends InterfaceUIOptional
+    : T extends UIGenCustomElement
+    ? AsNormalTypescriptObject<T["data"]>
+    : T extends UIGenOptional
     ? AsNormalTypescriptObject<T["data"]> | undefined
-    : T extends InterfaceUIArray
+    : T extends UIGenArray
     ? Array<AsNormalTypescriptObject<T["array"][number]>>
-    : T extends InterfaceUIObject
+    : T extends UIGenObject
     ? {
         [Key in keyof T]: AsNormalTypescriptObject<T[Key]>
     }
@@ -208,9 +200,9 @@ export type AsNormalTypescriptObject<T extends InterfaceUIData> =
     ? T
     : never;
 
-type assddsf = AsNormalTypescriptObject<number | TypedInterfaceUIWithOptions<number>>
+//type assddsf = AsNormalTypescriptObject<number | TypedUIGenWithOptions<number>>
 
-export function toNormalTypescriptObject<T>(uiData: InterfaceUIDataified<T> & InterfaceUIData): T {
+export function toNormalTypescriptObject<T>(uiData: UIGenDataified<T> & UIGenData): T {
     
     switch (typeof uiData) {
     case "object":
@@ -230,10 +222,10 @@ export function toNormalTypescriptObject<T>(uiData: InterfaceUIDataified<T> & In
         case InterfaceMode.ARRAY:
             //@ts-ignore
             return uiData.array.map(elem =>
-                //@ts-ignore
                 toNormalTypescriptObject(elem));
         case InterfaceMode.UNION:
-            //@ts-ignore
+            return toNormalTypescriptObject(uiData.data);
+        case InterfaceMode.WITH_OPTIONS:
             return toNormalTypescriptObject(uiData.data);
         }
     case "number":
@@ -246,76 +238,84 @@ export function toNormalTypescriptObject<T>(uiData: InterfaceUIDataified<T> & In
 }
 
 export enum InterfaceMode {
-    OPTIONAL, ARRAY, UNION, WITH_OPTIONS
+    OPTIONAL, ARRAY, UNION, WITH_OPTIONS, CUSTOM
 };
 
-type InterfaceUIObject = {
+type UIGenObject = {
     $mode?: undefined,
-    [key: InterfaceUIDataKey]: InterfaceUIData
+    [key: UIGenDataKey]: UIGenData
 }
 
-export type InterfaceUIOptional = {
+export type UIGenOptional = {
     $mode: InterfaceMode.OPTIONAL
     exists: boolean,
-    data: InterfaceUIData
+    data: UIGenData
 }
 
 
-export type TypedInterfaceUIArray<T extends InterfaceUIData> = {
+export type TypedUIGenArray<T extends UIGenData> = {
     $mode: InterfaceMode.ARRAY
-    arrayExample: T & InterfaceUIData,
-    array: (T & InterfaceUIData)[]
+    arrayExample: T & UIGenData,
+    array: (T & UIGenData)[]
 }
-export type InterfaceUIArray = TypedInterfaceUIArray<any>;
+export type UIGenArray = TypedUIGenArray<any>;
 
-export type TypedInterfaceUIUnion<T extends InterfaceUIData> = {
+
+export type TypedUIGenUnion<T extends UIGenData> = {
     $mode: InterfaceMode.UNION,
-    unionExamples: (T & InterfaceUIData)[],
-    data: T & InterfaceUIData,
+    unionExamples: (T & UIGenData)[],
+    data: T & UIGenData,
     labels: string[],
     index: number
 };
-export type InterfaceUIUnion = TypedInterfaceUIUnion<any>
+export type UIGenUnion = TypedUIGenUnion<any>
 
-export type InterfaceUIOptions = {
+
+export type UIGenOptions = {
     $mode: InterfaceMode.WITH_OPTIONS,
     className?: string,
     label?: string
 }
+export type UIGenWithOptions = TypedUIGenWithOptions<any>;
+export type TypedUIGenWithOptions<T extends UIGenData> = {
+    data: T & UIGenData,
+} & UIGenOptions
 
-export type InterfaceUIWithOptions = TypedInterfaceUIWithOptions<any>;
 
-
-type TypedInterfaceUIWithOptions<T> = {
+export type TypedUIGenCustomElement<T> = {
+    $mode: InterfaceMode.CUSTOM,
     data: T,
-    customElement?: (props: 
+    customElement: (props: 
         { 
             label?: string,
             data: T,
             setData: (data: T) => void
         }
     ) => JSX.Element,
-} & InterfaceUIOptions
+}
+export type UIGenCustomElement = TypedUIGenCustomElement<any>;
 
-export type InterfaceUIData = 
-      InterfaceUIObject
+
+export type UIGenData = 
+      UIGenObject
     | number 
     | string 
     | boolean 
     | undefined 
-    | InterfaceUIOptional
-    | InterfaceUIArray
-    | InterfaceUIUnion
-    | InterfaceUIWithOptions;
+    | UIGenOptional
+    | UIGenArray
+    | UIGenUnion
+    | UIGenWithOptions
+    | UIGenCustomElement;
 
-type InterfaceUIProps<T> = {
-    data: InterfaceUIData & T,
+type UIGenProps<T> = {
+    data: UIGenData & T,
     label?: string,
     className?: string,
-    setData: (data: InterfaceUIData & T) => void
+    setData: (data: UIGenData & T) => void
 }
 
-export function InterfaceUI<T>(props: InterfaceUIProps<T>) {
+export function UIGen<T>(props: UIGenProps<T>) {
     let className: string | undefined = props.className ?? "";
     if (typeof props.data == "object") {
         switch (props.data.$mode) {
@@ -338,17 +338,16 @@ export function InterfaceUI<T>(props: InterfaceUIProps<T>) {
 
     switch (typeof props.data) {
     case "object":
-        if (props.data.$mode == InterfaceMode.WITH_OPTIONS) {
-            if (props.data.customElement) {
-                return <props.data.customElement label={props.label} data={props.data.data} setData={data => {
-                    if (typeof props.data != "object" || props.data.$mode != InterfaceMode.WITH_OPTIONS) return;
-                    props.setData({
-                        ...props.data,
-                        data,
-                    });
-                }}></props.data.customElement>
-            }
-            return (<InterfaceUI 
+        if (props.data.$mode == InterfaceMode.CUSTOM) {
+            return <props.data.customElement label={props.label} data={props.data.data} setData={data => {
+                if (typeof props.data != "object" || props.data.$mode != InterfaceMode.CUSTOM) return;
+                props.setData({
+                    ...props.data,
+                    data,
+                });
+            }}></props.data.customElement>
+        } else if (props.data.$mode == InterfaceMode.WITH_OPTIONS) {
+            return (<UIGen 
                 data={props.data.data}
                 setData={(data) => {
                     if (typeof props.data != "object" || props.data.$mode != InterfaceMode.WITH_OPTIONS) return;
@@ -359,7 +358,7 @@ export function InterfaceUI<T>(props: InterfaceUIProps<T>) {
                 }}
                 label={props.data.label}
                 className={props.data.className}
-            ></InterfaceUI>)
+            ></UIGen>)
         } else if (props.data.$mode == InterfaceMode.UNION) {
             return (<div className={className}>
                 {props.label ? <label>{props.label}</label> : undefined}
@@ -371,13 +370,13 @@ export function InterfaceUI<T>(props: InterfaceUIProps<T>) {
                         index
                     });
                 }}></SelectInput>
-                {<InterfaceUI label={""} data={props.data.data} setData={data => {
+                {<UIGen label={""} data={props.data.data} setData={data => {
                     if (typeof props.data != "object" || props.data.$mode != InterfaceMode.UNION) return;
                     props.setData({
                         ...props.data,
                         data
                     });
-                }}></InterfaceUI>}
+                }}></UIGen>}
             </div>)
 
 
@@ -393,19 +392,19 @@ export function InterfaceUI<T>(props: InterfaceUIProps<T>) {
                 {props.label ? <label>{props.label}</label> : undefined}
                 <ul>
                 {props.data.array
-                .map((datum, key) => {
+                .map((_, key) => {
                     if (typeof props.data != "object" || props.data.$mode != InterfaceMode.ARRAY) return;
-                    return <li><InterfaceUI 
+                    return <li><UIGen 
                         key={key.toString()} 
                         label={key.toString()} 
-                        data={reinterpret<any, InterfaceUIData>(props.data.array[key])} 
+                        data={reinterpret<any, UIGenData>(props.data.array[key])} 
                         setData={datum => { if (typeof props.data == "object" && props.data.$mode == InterfaceMode.ARRAY) props.setData(
                             {
                                 ...props.data,
                                 array: props.data.array.map((d, i) => (i == key) ? datum : d)
                             }
                         ); }}
-                    ></InterfaceUI></li>
+                    ></UIGen></li>
                  })}
                  </ul>
                  {<button onClick={addNewElement}>Add New</button>}
@@ -424,14 +423,14 @@ export function InterfaceUI<T>(props: InterfaceUIProps<T>) {
                     });
                 }}></BoolInput>
                 {props.data.exists 
-                ? <InterfaceUI label={""} data={props.data.data} setData={data => {
+                ? <UIGen label={""} data={props.data.data} setData={data => {
                     if (typeof props.data != "object" || props.data.$mode != InterfaceMode.OPTIONAL) return;
                     props.setData({
                         $mode: InterfaceMode.OPTIONAL,
                         exists: props.data.exists,
                         data
                     });
-                }}></InterfaceUI> 
+                }}></UIGen> 
                 : undefined}
             </div>)
 
@@ -441,13 +440,13 @@ export function InterfaceUI<T>(props: InterfaceUIProps<T>) {
                 {props.label ? <label>{props.label}</label> : undefined}
                 {(Object.keys(props.data))
                 .map(key => 
-                    <InterfaceUI 
+                    <UIGen 
                         key={key.toString()} 
                         label={deCamelCase(key.toString())} 
                         //@ts-ignore
-                        data={reinterpret<any, InterfaceUIData>(props.data[key])} 
+                        data={reinterpret<any, UIGenData>(props.data[key])} 
                         setData={datum => { if (typeof props.data == "object") props.setData(reinterpret({ ...props.data, [key]: datum })); }}
-                    ></InterfaceUI>
+                    ></UIGen>
                 )}
             </div>);
         }

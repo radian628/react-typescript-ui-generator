@@ -1,0 +1,17 @@
+{
+  "name": "ts-object-ui-generator",
+  "version": "0.1.0",
+  "description": "Automatically generate UIs for complex data structures in JavaScript and TypeScript.",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "radian628",
+  "license": "ISC",
+  "devDependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "typescript": "^4.7.4"
+  }
+}
