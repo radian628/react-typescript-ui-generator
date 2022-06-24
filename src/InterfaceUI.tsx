@@ -3,6 +3,19 @@ import { Dispatch, SetStateAction } from "react";
 
 
 
+function deCamelCase(str: string) {
+    if (str == "") return "";
+    let outStr = str[0].toUpperCase();
+    for (let char of str.slice(1)) {
+        if ("A" <= char && char <= "Z") {
+            outStr += " " + char;
+        } else {
+            outStr += char;
+        }
+    }
+    return outStr;
+}
+
 
 
 type SelectInputProps<ValueType> = {
@@ -397,6 +410,8 @@ export function InterfaceUI<T>(props: InterfaceUIProps<T>) {
                  </ul>
                  {<button onClick={addNewElement}>Add New</button>}
             </div>);
+
+
         } else if (props.data.$mode == InterfaceMode.OPTIONAL) {
             return (<div className={className}>
                 {props.label ? <label>{props.label}</label> : undefined}
@@ -419,6 +434,8 @@ export function InterfaceUI<T>(props: InterfaceUIProps<T>) {
                 }}></InterfaceUI> 
                 : undefined}
             </div>)
+
+            
         } else {
             return (<div className={className}>
                 {props.label ? <label>{props.label}</label> : undefined}
@@ -426,7 +443,7 @@ export function InterfaceUI<T>(props: InterfaceUIProps<T>) {
                 .map(key => 
                     <InterfaceUI 
                         key={key.toString()} 
-                        label={key.toString()} 
+                        label={deCamelCase(key.toString())} 
                         //@ts-ignore
                         data={reinterpret<any, InterfaceUIData>(props.data[key])} 
                         setData={datum => { if (typeof props.data == "object") props.setData(reinterpret({ ...props.data, [key]: datum })); }}
