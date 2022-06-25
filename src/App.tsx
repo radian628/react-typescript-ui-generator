@@ -78,26 +78,21 @@ function App() {
 
   let binTreeRoot: BinaryTreeUI | {} = {}
 
-  Object.assign(binTreeRoot, {
-    $mode: InterfaceMode.UNION,
-    unionExamples: [0, { left: binTreeRoot, right: binTreeRoot }],
-    labels: ["leaf", "interior"],
-    data: 0,
-    index: 0
-  });
+  Object.assign(binTreeRoot, 
+    UI.Union(0, [0, { left: binTreeRoot, right: binTreeRoot }], ["leaf", "interior"]));
 
   let [treeUIData, setTreeUIData] 
     = useState<BinaryTreeUI>(binTreeRoot as BinaryTreeUI);
   console.log(toNormalTypescriptObject<Test2>(test));
 
   return (<React.Fragment>
-    <Example1></Example1>
     <div className="input-css-test">
+    <Example1></Example1>
     <UIGen data={test} setData={setTest}></UIGen>
-    </div>
-    {/* <UIGen data={treeUIData} setData={data => {
+    <UIGen data={treeUIData} setData={data => {
       setTreeUIData(data);
-    }}></UIGen> */}
+    }}></UIGen>
+    </div>
   </React.Fragment>);
 }
 

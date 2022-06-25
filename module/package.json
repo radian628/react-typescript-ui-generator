@@ -4,7 +4,7 @@
   "description": "Automatically generate UIs for complex data structures in JavaScript and TypeScript.",
   "main": "dist/index.js",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc --watch",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "radian628",

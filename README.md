@@ -1,5 +1,9 @@
 # react-typescript-ui-generator
 
+`npm install ts-object-ui-generator`
+
+[NPM Page](https://www.npmjs.com/package/ts-object-ui-generator)
+
 [GUIDE](#guide)
 
 ## tl;dr
