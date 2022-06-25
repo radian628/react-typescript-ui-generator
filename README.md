@@ -76,7 +76,7 @@ type OptionalExample = {
 }
 //...
 const [optional, setOptional] = useState<UIGenDataified<OptionalExample>>({
-    optionalNumber?: UI.Optional(123 /* Contains 123 by default */, false /* Number does not exist by default */)
+    optionalNumber: UI.Optional(123 /* Contains 123 by default */, false /* Number does not exist by default */)
 });
 //...
 ```
