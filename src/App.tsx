@@ -87,11 +87,7 @@ function App() {
 
   return (<React.Fragment>
     <div className="input-css-test">
-    <Example1></Example1>
     <UIGen data={test} setData={setTest}></UIGen>
-    <UIGen data={treeUIData} setData={data => {
-      setTreeUIData(data);
-    }}></UIGen>
     </div>
   </React.Fragment>);
 }

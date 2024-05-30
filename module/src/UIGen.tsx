@@ -312,10 +312,12 @@ type UIGenProps<T> = {
     data: UIGenData & T,
     label?: string,
     className?: string,
-    setData: (data: UIGenData & T) => void
+    setData: (data: UIGenData & T) => void,
+    depth?: number
 }
 
 export function UIGen<T>(props: UIGenProps<T>) {
+    let depth = props.depth ?? 0;
     let className: string | undefined = props.className ?? "";
     if (typeof props.data == "object") {
         switch (props.data.$mode) {
@@ -333,6 +335,8 @@ export function UIGen<T>(props: UIGenProps<T>) {
             break;
         }
     }
+
+    className += (depth % 2 == 0) ? " even-depth" : " odd-depth";
 
     if (className === "") className = undefined;
 
@@ -395,6 +399,7 @@ export function UIGen<T>(props: UIGenProps<T>) {
                 .map((_, key) => {
                     if (typeof props.data != "object" || props.data.$mode != InterfaceMode.ARRAY) return;
                     return <li><UIGen 
+                        depth={depth + 1}
                         key={key.toString()} 
                         label={key.toString()} 
                         data={reinterpret<any, UIGenData>(props.data.array[key])} 

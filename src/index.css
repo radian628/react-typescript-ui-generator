@@ -44,12 +44,14 @@ code {
   .number-input {
     border: 1px solid #880000;
     border-radius: 5px;
+    height: 1.4em;
   }
 
 .input-css-test
   .string-input {
     border: 1px solid #008800;
     border-radius: 5px;
+    height: 1.4em;
   }
 
 .input-css-test
@@ -57,3 +59,17 @@ code {
     border: 1px solid #00000088;
     border-radius: 5px;
   }
+
+.interface-ui-object {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.interface-ui-array {
+  max-height: 25vh;
+  overflow: scroll;
+}
+
+.input-css-test ul {
+  padding-left: 0;
+}
